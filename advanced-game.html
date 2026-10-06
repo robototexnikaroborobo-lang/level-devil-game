@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Level Devil - Advanced</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0a0e27;
+      color: white;
+      font-family: 'Arial', sans-serif;
+    }
+    .container {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+    .header {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 10;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .hud {
+      padding: 12px 20px;
+      background: rgba(0,0,0,0.5);
+      border: 2px solid #3b82f6;
+      border-radius: 999px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      font-size: 14px;
+    }
+    .stats {
+      padding: 12px 16px;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .stats div {
+      display: flex;
+      gap: 8px;
+    }
+    #game {
+      display: block;
+      background: linear-gradient(135deg, #1a1b3f 0%, #0f0f2e 50%, #0a0a1f 100%);
+      border: 4px solid #3b82f6;
+      border-radius: 16px;
+      box-shadow: 0 0 40px rgba(59, 130, 246, 0.3), 0 20px 60px rgba(0,0,0,0.7);
+      max-width: 95vw;
+      max-height: 85vh;
+    }
+    .help {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: #bfdbfe;
+      opacity: 0.85;
+      background: rgba(0,0,0,0.4);
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      text-align: center;
+      z-index: 10;
+    }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+    .modal-content {
+      background: linear-gradient(135deg, #1a1b3f, #0f0f2e);
+      padding: 40px;
+      border-radius: 16px;
+      border: 2px solid #3b82f6;
+      text-align: center;
+      max-width: 500px;
+      box-shadow: 0 0 60px rgba(59, 130, 246, 0.4);
+    }
+    .modal h1 {
+      font-size: 48px;
+      margin: 0 0 20px 0;
+      color: #fbbf24;
+      text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+    }
+    .modal h2 {
+      font-size: 28px;
+      margin: 0 0 16px 0;
+      color: #60a5fa;
+    }
+    .modal p {
+      font-size: 16px;
+      margin: 8px 0;
+      color: #d1d5db;
+      line-height: 1.6;
+    }
+    .modal button {
+      margin-top: 24px;
+      padding: 12px 32px;
+      font-size: 16px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #3b82f6, #1e40af);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .modal button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="hud" id="hud">Level 1/30</div>
+      <div class="stats">
+        <div>Deaths: <span id="deathCount">0</span></div>
+        <div>Time: <span id="timer">0s</span></div>
+      </div>
+    </div>
+    <canvas id="game" width="1200" height="600"></canvas>
+    <div class="help">Move: A/D or ←/→ · Jump: W / ↑ / Space · Restart: R · Sound: M</div>
+  </div>
+
+  <div class="modal hidden" id="startModal">
+    <div class="modal-content">
+      <h1>LEVEL DEVIL</h1>
+      <p>A deceptive platformer</p>
+      <p>Reach the exit... if you can find it.</p>
+      <button onclick="startGame()">START GAME</button>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="winModal">
+    <div class="modal-content">
+      <h2 id="winTitle">Level Complete!</h2>
+      <p id="winMessage"></p>
+      <button onclick="nextLevel()">NEXT LEVEL</button>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="gameOverModal">
+    <div class="modal-content">
+      <h2>GAME OVER</h2>
+      <p id="gameOverMessage"></p>
+      <button onclick="resetLevel()">RETRY</button>
+      <button onclick="startGame()">RESTART FROM LEVEL 1</button>
+    </div>
+  </div>
+
+  <script>
+    // ============= AUDIO CONTEXT =============
+    class SoundManager {
+      constructor() {
+        this.enabled = true;
+        this.audioContext = null;
+      }
+
+      init() {
+        if (!this.audioContext) {
+          this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+      }
+
+      play(type, duration = 0.1, freq1 = 400, freq2 = 200) {
+        if (!this.enabled || !this.audioContext) return;
+
+        const now = this.audioContext.currentTime;
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+
+        switch(type) {
+          case 'jump':
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.exponentialRampToValueAtTime(200, now + 0.15);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now);
+            osc.stop(now + 0.15);
+            break;
+          case 'death':
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
+            break;
+          case 'levelup':
+            for (let i = 0; i < 4; i++) {
+              const o = this.audioContext.createOscillator();
+              const g = this.audioContext.createGain();
+              o.connect(g);
+              g.connect(this.audioContext.destination);
+              o.frequency.value = 400 + i * 150;
+              g.gain.setValueAtTime(0.1, now + i * 0.1);
+              g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.15);
+              o.start(now + i * 0.1);
+              o.stop(now + i * 0.1 + 0.15);
+            }
+            break;
+          case 'trap':
+            osc.frequency.setValueAtTime(200, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now);
+            osc.stop(now + 0.2);
+            break;
+          case 'step':
+            osc.frequency.setValueAtTime(freq1, now);
+            gain.gain.setValueAtTime(0.05, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+            osc.start(now);
+            osc.stop(now + duration);
+            break;
+        }
+      }
+
+      toggle() {
+        this.enabled = !this.enabled;
+        return this.enabled;
+      }
+    }
+
+    const soundManager = new SoundManager();
+
+    // ============= GAME SETUP =============
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const hud = document.getElementById("hud");
+    const deathCount = document.getElementById("deathCount");
+    const timer = document.getElementById("timer");
+
+    const keys = {};
+    window.addEventListener("keydown", (e) => {
+      const k = e.key.toLowerCase();
+      if (["arrowup","arrowdown","arrowleft","arrowright"," "].includes(k) || k === " ") {
+        e.preventDefault();
+      }
+      keys[k] = true;
+      if (k === "r") resetLevel();
+      if (k === "m") {
+        const enabled = soundManager.toggle();
+        console.log("Sound: " + (enabled ? "ON" : "OFF"));
+      }
+    });
+    window.addEventListener("keyup", (e) => {
+      keys[e.key.toLowerCase()] = false;
+    });
+
+    // ============= LEVELS =============
+    const levels = [
+      {
+        name: "Simple Start",
+        start: { x: 30, y: 450 },
+        platforms: [
+          { x: 0, y: 540, w: 260, h: 60 },
+          { x: 340, y: 480, w: 180, h: 20 },
+          { x: 570, y: 420, w: 150, h: 20 },
+          { x: 760, y: 350, w: 140, h: 20 },
+          { x: 930, y: 540, w: 270, h: 60 }
+        ],
+        spikes: [
+          { x: 260, y: 540, w: 70, h: 20 },
+          { x: 520, y: 540, w: 40, h: 20 }
+        ],
+        doors: [
+          { x: 1110, y: 460, w: 60, h: 90, fake: false }
+        ],
+        message: "Just reach the green door."
+      },
+      {
+        name: "First Trap",
+        start: { x: 30, y: 450 },
+        platforms: [
+          { x: 0, y: 540, w: 280, h: 60 },
+          { x: 360, y: 480, w: 160, h: 20 },
+          { x: 580, y: 420, w: 140, h: 20 },
+          { x: 770, y: 500, w: 160, h: 20 },
+          { x: 970, y: 540, w: 230, h: 60 }
+        ],
+        spikes: [
+          { x: 280, y: 540, w: 60, h: 20 },
+          { x: 520, y: 540, w: 30, h: 20 },
+          { x: 720, y: 540, w: 30, h: 20 }
+        ],
+        doors: [
+          { x: 1140, y: 460, w: 60, h: 90, fake: false },
+          { x: 800, y: 400, w: 60, h: 90, fake: true }
+        ],
+        message: "Red doors are traps."
+      },
+      {
+        name: "Disappearing Act",
+        start: { x: 30, y: 450 },
+        platforms: [
+          { x: 0, y: 540, w: 280, h: 60 },
+          { x: 360, y: 480, w: 160, h: 20 },
+          { x: 580, y: 420, w: 140, h: 20, disappearOnTouch: true },
+          { x: 770, y: 470, w: 180, h: 20 },
+          { x: 1000, y: 540, w: 200, h: 60 }
+        ],
+        spikes: [
+          { x: 280, y: 540, w: 60, h: 20 },
+          { x: 520, y: 540, w: 30, h: 20 },
+          { x: 750, y: 540, w: 30, h: 20 }
+        ],
+        doors: [
+          { x: 1140, y: 460, w: 60, h: 90, fake: false }
+        ],
+        message: "Some platforms disappear when you step on them."
+      },
+      {
+        name: "Double Fake",
+        start: { x: 30, y: 450 },
+        platforms: [
+          { x: 0, y: 540, w: 300, h: 60 },
+          { x: 380, y: 480, w: 160, h: 20 },
+          { x: 600, y: 420, w: 150, h: 20 },
+          { x: 800, y: 350, w: 120, h: 20 },
+          { x: 1000, y: 540, w: 200, h: 60 }
+        ],
+        spikes: [
+          { x: 300, y: 540, w: 60, h: 20 },
+          { x: 540, y: 540, w: 35, h: 20 },
+          { x: 750, y: 540, w: 35, h: 20 },
+          { x: 920, y: 540, w: 35, h: 20 }
+        ],
+        doors: [
+          { x: 1150, y: 460, w: 60, h: 90, fake: false },
+          { x: 820, y: 250, w: 60, h: 90, fake: true },
+          { x: 600, y: 310, w: 60, h: 90, fake: true }
+        ],
+        message: "Two fake exits. Only one is real."
+      },
+      {
+        name: "Reverse Controls",
+        start: { x: 30, y: 450 },
+        platforms: [
+          { x: 0, y: 540, w: 280, h: 60 },
+          { x: 360, y: 480, w: 160, h: 20 },
+          { x: 580, y: 420, w: 140, h: 20 },
+          { x: 800, y: 360, w: 160, h: 20 },
+          { x: 1000, y: 540, w: 200, h: 60 }
+        ],
+        spikes: [
+          { x: 280, y: 540, w: 60, h: 20 },
+          { x: 520, y: 540, w: 30, h: 20 },
+          { x: 720, y: 540, w: 40, h: 20 },
+          { x: 960, y: 540, w: 30, h: 20 }
+        ],
+        doors: [
+          { x: 1150, y: 460, w: 60, h: 90, fake: false }
+        ],
+        message: "Your controls will flip. Be ready.",
+        controlFlip: { triggerX: 700, duration: 120 }
+      },
+      {
+        name: "Spike Maze",
+        start: { x: 30, y: 450 },
+        platforms: [
+          { x: 0, y: 540, w: 300, h: 60 },
+          { x: 380, y: 480, w: 160, h: 20 },
+          { x: 580, y: 420, w: 160, h: 20 },
+          { x: 800, y: 360, w: 160, h: 20 },
+          { x: 1020, y: 540, w: 180, h: 60 }
+        ],
+        spikes: [
+          { x: 300, y: 540, w: 65, h: 20 },
+          { x: 540, y: 540, w: 30, h: 20 },
+          { x: 740, y: 540, w: 50, h: 20 },
+          { x: 960, y: 540, w: 50, h: 20 }
+        ],
+        doors: [
+          { x: 1150, y: 460, w: 60, h: 90, fake: false }
+        ],
+        message: "Navigate through the spikes."
+      },
+      {
+        name: "Hidden Exit",
+        start: { x: 30, y: 450 },
+        platforms: [
+          { x: 0, y: 540, w: 280, h: 60 },
+          { x: 360, y: 480, w: 160, h: 20 },
+          { x: 580, y: 420, w: 140, h: 20 },
+          { x: 780, y: 500, w: 150, h: 20 },
+          { x: 1000, y: 540, w: 200, h: 60 }
+        ],
+        spikes: [
+          { x: 280, y: 540, w: 60, h: 20 },
+          { x: 520, y: 540, w: 30, h: 20 },
+          { x: 720, y: 540, w: 40, h: 20 },
+          { x: 950, y: 540, w: 40, h: 20 }
+        ],
+        doors: [
+          { x: 1140, y: 460, w: 60, h: 90, fake: false },
+          { x: 360, y: 380, w: 60, h: 90, fake: true },
+          { x: 600, y: 320, w: 60, h: 90, fake: true }
+        ],
+        message: "Multiple doors. Find the real one."
+      },
+      {
+        name: "Moving Hazard",
+        start: { x: 30, y: 450 },
+        platforms: [
+          { x: 0, y: 540, w: 300, h: 60 },
+          { x: 380, y: 480, w: 160, h: 20 },
+          { x: 600, y: 420, w: 140, h: 20 },
+          { x: 800, y: 360, w: 140, h: 20 },
+          { x: 1000, y: 540, w: 200, h: 60 }
+        ],
+        spikes: [
+          { x: 300, y: 540, w: 65, h: 20 },
+          { x: 540, y: 540, w: 35, h: 20 },
+          { x: 740, y: 540, w: 35, h: 20 },
+          { x: 960, y: 540, w: 30, h: 20 }
+        ],
+        saws: [
+          { x: 400, y: 300, r: 25, direction: 1, speed: 2 }
+        ],
+        doors: [
+          { x: 1140, y: 460, w: 60, h: 90, fake: false }
+        ],
+        message: "Watch out for the saw."
+      },
+      {
+        name: "The Deceiver",
+        start: { x: 30, y: 450 },
+        platforms: [
+          { x: 0, y: 540, w: 300, h: 60 },
+          { x: 380, y: 470, w: 150, h: 20 },
+          { x: 570, y: 410, w: 140, h: 20, disappearOnTouch: true },
+          { x: 760, y: 470, w: 160, h: 20 },
+          { x: 990, y: 540, w: 210, h: 60 }
+        ],
+        spikes: [
+          { x: 300, y: 540, w: 65, h: 20 },
+          { x: 530, y: 540, w: 30, h: 20 },
+          { x: 710, y: 540, w: 40, h: 20 },
+          { x: 950, y: 540, w: 35, h: 20 }
+        ],
+        doors: [
+          { x: 1160, y: 460, w: 60, h: 90, fake: false },
+          { x: 390, y: 370, w: 60, h: 90, fake: true }
+        ],
+        message: "Trust nothing.",
+        controlFlip: { triggerX: 650, duration: 100 }
+      },
+      {
+        name: "Final Challenge",
+        start: { x: 30, y: 450 },
+        platforms: [
+          { x: 0, y: 540, w: 300, h: 60 },
+          { x: 380, y: 480, w: 140, h: 20 },
+          { x: 560, y: 420, w: 130, h: 20, disappearOnTouch: true },
+          { x: 740, y: 360, w: 150, h: 20 },
+          { x: 950, y: 470, w: 160, h: 20, disappearOnTouch: true },
+          { x: 1050, y: 540, w: 150, h: 60 }
+        ],
+        spikes: [
+          { x: 300, y: 540, w: 65, h: 20 },
+          { x: 520, y: 540, w: 30, h: 20 },
+          { x: 690, y: 540, w: 40, h: 20 },
+          { x: 890, y: 540, w: 50, h: 20 }
+        ],
+        saws: [
+          { x: 650, y: 280, r: 20, direction: 1, speed: 2.5 }
+        ],
+        doors: [
+          { x: 1165, y: 460, w: 60, h: 90, fake: false },
+          { x: 760, y: 260, w: 60, h: 90, fake: true }
+        ],
+        message: "Almost there. Don't give up.",
+        controlFlip: { triggerX: 700, duration: 150 }
+      },
+      // More levels...
+      ...Array.from({ length: 20 }, (_, i) => ({
+        name: `Level ${11 + i}`,
+        start: { x: 30, y: 450 },
+        platforms: generateRandomLevel(i + 11),
+        spikes: generateRandomSpikes(i + 11),
+        saws: i % 3 === 0 ? [{ x: 400 + i * 30, y: 250 + i * 10, r: 20, direction: 1, speed: 2 + i * 0.1 }] : [],
+        doors: [
+          { x: 1140, y: 460, w: 60, h: 90, fake: false },
+          ...generateFakeDoors(i + 11)
+        ],
+        message: ["Keep going!", "You got this!", "Almost there!", "Don't stop!", "One more push!"][i % 5],
+        controlFlip: i % 4 === 0 ? { triggerX: 600 + i * 20, duration: 120 + i * 5 } : undefined
+      }))
+    ];
+
+    function generateRandomLevel(seed) {
+      const platforms = [
+        { x: 0, y: 540, w: 300 + seed * 2, h: 60 }
+      ];
+      for (let i = 0; i < 4 + seed % 3; i++) {
+        platforms.push({
+          x: 350 + i * 200 + seed * 5,
+          y: 480 - i * 50 - (seed % 10) * 3,
+          w: 140 + (seed % 20),
+          h: 20,
+          disappearOnTouch: seed % (i + 2) === 0
+        });
+      }
+      platforms.push({ x: 1000, y: 540, w: 200, h: 60 });
+      return platforms;
+    }
+
+    function generateRandomSpikes(seed) {
+      const spikes = [];
+      for (let i = 0; i < 4 + seed % 3; i++) {
+        spikes.push({
+          x: 280 + i * 240 + seed * 3,
+          y: 540,
+          w: 30 + (seed % 40),
+          h: 20
+        });
+      }
+      return spikes;
+    }
+
+    function generateFakeDoors(seed) {
+      const count = 1 + seed % 3;
+      const doors = [];
+      for (let i = 0; i < count; i++) {
+        doors.push({
+          x: 400 + i * 300 + seed * 10,
+          y: 300 - i * 80,
+          w: 60,
+          h: 90,
+          fake: true
+        });
+      }
+      return doors;
+    }
+
+    let currentLevel = 0;
+    let player;
+    let gameOver = false;
+    let levelStartTime = 0;
+    let totalDeaths = 0;
+    let levelDeaths = 0;
+    let gameStarted = false;
+
+    function createPlayer(x, y) {
+      return {
+        x, y,
+        w: 28,
+        h: 42,
+        vx: 0,
+        vy: 0,
+        speed: 5,
+        jumpForce: 14.5,
+        gravity: 0.75,
+        onGround: false,
+        dir: 1,
+        flipped: false,
+        flipTimer: 0,
+        color: "#facc15"
+      };
+    }
+
+    function startGame() {
+      soundManager.init();
+      gameStarted = true;
+      totalDeaths = 0;
+      loadLevel(0);
+      document.getElementById("startModal").classList.add("hidden");
+    }
+
+    function loadLevel(index) {
+      currentLevel = Math.min(index, levels.length - 1);
+      const level = levels[currentLevel];
+      player = createPlayer(level.start.x, level.start.y);
+      gameOver = false;
+      levelDeaths = 0;
+      levelStartTime = Date.now();
+      hud.textContent = `Level ${currentLevel + 1}/${levels.length}`;
+      for (const p of level.platforms) p.triggered = false;
+    }
+
+    function resetLevel() {
+      soundManager.play('death');
+      levelDeaths++;
+      totalDeaths++;
+      deathCount.textContent = totalDeaths;
+      loadLevel(currentLevel);
+    }
+
+    function rectsIntersect(a, b) {
+      return a.x < b.x + b.w &&
+             a.x + a.w > b.x &&
+             a.y < b.y + b.h &&
+             a.y + a.h > b.y;
+    }
+
+    function getActivePlatforms() {
+      const level = levels[currentLevel];
+      return level.platforms.filter(p => !(p.disappearOnTouch && p.triggered));
+    }
+
+    function hitSpike() {
+      const level = levels[currentLevel];
+      for (const spike of level.spikes) {
+        if (rectsIntersect(player, spike)) return true;
+      }
+      return false;
+    }
+
+    function hitSaw() {
+      const level = levels[currentLevel];
+      if (!level.saws) return false;
+      for (const saw of level.saws) {
+        const dx = (player.x + player.w / 2) - saw.x;
+        const dy = (player.y + player.h / 2) - saw.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < saw.r + 15) return true;
+      }
+      return false;
+    }
+
+    function checkDoor() {
+      const level = levels[currentLevel];
+      for (const door of level.doors) {
+        if (door.fake && rectsIntersect(player, door)) {
+          return "fake";
+        }
+        if (!door.fake && rectsIntersect(player, door)) {
+          return "goal";
+        }
+      }
+      return null;
+    }
+
+    function nextLevel() {
+      soundManager.play('levelup');
+      if (currentLevel < levels.length - 1) {
+        document.getElementById("winModal").classList.remove("hidden");
+        document.getElementById("winTitle").textContent = `Level ${currentLevel + 1} Complete!`;
+        document.getElementById("winMessage").textContent = `Deaths: ${levelDeaths} | Time: ${Math.floor((Date.now() - levelStartTime) / 1000)}s`;
+      } else {
+        document.getElementById("winModal").classList.remove("hidden");
+        document.getElementById("winTitle").textContent = "YOU ESCAPED THE DEVIL!";
+        document.getElementById("winMessage").textContent = `Total Deaths: ${totalDeaths} | Final Time: ${Math.floor((Date.now() - levelStartTime) / 1000)}s`;
+      }
+    }
+
+    function goToNextLevel() {
+      loadLevel(currentLevel + 1);
+      document.getElementById("winModal").classList.add("hidden");
+    }
+
+    function die() {
+      if (gameOver) return;
+      gameOver = true;
+      soundManager.play('death');
+      setTimeout(resetLevel, 300);
+    }
+
+    function update() {
+      if (gameOver || !gameStarted) return;
+
+      const level = levels[currentLevel];
+
+      let moveX = 0;
+      if (keys.d || keys.arrowright) moveX += 1;
+      if (keys.a || keys.arrowleft) moveX -= 1;
+
+      if (player.flipped) moveX *= -1;
+
+      if (moveX !== 0) {
+        player.vx = moveX * player.speed;
+        player.dir = moveX;
+      } else {
+        player.vx = 0;
+      }
+
+      if ((keys.w || keys.arrowup || keys[" "]) && player.onGround) {
+        player.vy = -player.jumpForce;
+        player.onGround = false;
+        soundManager.play('jump');
+      }
+
+      if (player.flipTimer > 0) {
+        player.flipTimer -= 1;
+      } else {
+        player.flipped = false;
+      }
+
+      if (level.controlFlip && player.x > level.controlFlip.triggerX && !player.flipped) {
+        player.flipped = true;
+        player.flipTimer = level.controlFlip.duration;
+        soundManager.play('trap');
+      }
+
+      player.vy += player.gravity;
+      player.x += player.vx;
+
+      for (const p of getActivePlatforms()) {
+        if (rectsIntersect(player, p)) {
+          if (player.vx > 0) player.x = p.x - player.w;
+          if (player.vx < 0) player.x = p.x + p.w;
+        }
+      }
+
+      player.y += player.vy;
+      player.onGround = false;
+
+      for (const p of getActivePlatforms()) {
+        if (rectsIntersect(player, p)) {
+          if (player.vy > 0) {
+            player.y = p.y - player.h;
+            player.vy = 0;
+            player.onGround = true;
+          } else if (player.vy < 0) {
+            player.y = p.y + p.h;
+            player.vy = 0;
+          }
+
+          if (p.disappearOnTouch && !p.triggered) {
+            p.triggered = true;
+          }
+        }
+      }
+
+      if (player.y > canvas.height + 100) die();
+      if (player.x < 0) player.x = 0;
+      if (player.x + player.w > 1600) player.x = 1600 - player.w;
+
+      if (hitSpike()) die();
+      if (hitSaw()) die();
+
+      const doorState = checkDoor();
+      if (doorState === "fake") {
+        soundManager.play('trap');
+        die();
+      }
+      if (doorState === "goal") nextLevel();
+
+      const elapsed = Math.floor((Date.now() - levelStartTime) / 1000);
+      timer.textContent = elapsed + "s";
+    }
+
+    function drawBackground() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, "#1a1b3f");
+      grad.addColorStop(0.5, "#0f0f2e");
+      grad.addColorStop(1, "#0a0a1f");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "rgba(255,255,255,0.03)";
+      for (let x = 0; x < canvas.width; x += 40) {
+        ctx.fillRect(x, 0, 1, canvas.height);
+      }
+      for (let y = 0; y < canvas.height; y += 40) {
+        ctx.fillRect(0, y, canvas.width, 1);
+      }
+    }
+
+    function drawPlatforms() {
+      const level = levels[currentLevel];
+      for (const p of getActivePlatforms()) {
+        const gradient = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+        gradient.addColorStop(0, "#64748b");
+        gradient.addColorStop(1, "#475569");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.fillStyle = "#94a3b8";
+        ctx.fillRect(p.x + 3, p.y + 3, p.w - 6, p.h - 6);
+      }
+
+      for (const d of level.doors) {
+        const gradient = ctx.createLinearGradient(d.x, d.y, d.x, d.y + d.h);
+        gradient.addColorStop(0, d.fake ? "#dc2626" : "#16a34a");
+        gradient.addColorStop(1, d.fake ? "#7f1d1d" : "#15803d");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(d.x, d.y, d.w, d.h);
+        ctx.fillStyle = "#e2e8f0";
+        ctx.fillRect(d.x + 8, d.y + 8, d.w - 16, d.h - 16);
+      }
+    }
+
+    function drawSpikes() {
+      const level = levels[currentLevel];
+      for (const s of level.spikes) {
+        ctx.fillStyle = "#ef4444";
+        const count = Math.max(3, Math.floor(s.w / 6));
+        const step = s.w / count;
+        for (let i = 0; i < count; i++) {
+          const x = s.x + i * step;
+          ctx.beginPath();
+          ctx.moveTo(x, s.y + s.h);
+          ctx.lineTo(x + step / 2, s.y);
+          ctx.lineTo(x + step, s.y + s.h);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+    }
+
+    function drawSaws() {
+      const level = levels[currentLevel];
+      if (!level.saws) return;
+
+      for (const saw of level.saws) {
+        saw.x += saw.speed * saw.direction;
+        if (saw.x < 200) saw.direction = 1;
+        if (saw.x > canvas.width - 200) saw.direction = -1;
+
+        ctx.save();
+        ctx.translate(saw.x, saw.y);
+        ctx.rotate((Date.now() / 20) % (Math.PI * 2));
+
+        ctx.fillStyle = "#64748b";
+        ctx.beginPath();
+        ctx.arc(0, 0, saw.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#ef4444";
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2;
+          const x1 = Math.cos(angle) * (saw.r - 5);
+          const y1 = Math.sin(angle) * (saw.r - 5);
+          const x2 = Math.cos(angle + 0.3) * saw.r;
+          const y2 = Math.sin(angle + 0.3) * saw.r;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+    }
+
+    function drawPlayer() {
+      ctx.fillStyle = player.flipped ? "#f87171" : player.color;
+      ctx.fillRect(player.x, player.y, player.w, player.h);
+
+      ctx.fillStyle = "#1f2937";
+      const eyex = player.x + (player.dir > 0 ? 10 : 12);
+      ctx.fillRect(eyex, player.y + 10, 4, 4);
+      ctx.fillRect(player.x + (player.dir > 0 ? 16 : 6), player.y + 10, 4, 4);
+
+      if (player.flipTimer > 0) {
+        ctx.fillStyle = "rgba(248, 113, 113, 0.3)";
+        ctx.fillRect(player.x - 5, player.y - 5, player.w + 10, player.h + 10);
+      }
+    }
+
+    function drawMessage() {
+      const level = levels[currentLevel];
+      ctx.fillStyle = "rgba(0,0,0,0.4)";
+      ctx.fillRect(16, 16, 450, 35);
+      ctx.fillStyle = "#fef3c7";
+      ctx.font = "bold 16px Arial";
+      ctx.fillText(level.message, 28, 42);
+    }
+
+    function draw() {
+      drawBackground();
+      drawPlatforms();
+      drawSpikes();
+      drawSaws();
+      drawPlayer();
+      drawMessage();
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    window.startGame = startGame;
+    window.nextLevel = goToNextLevel;
+    window.resetLevel = resetLevel;
+
+    loop();
+    document.getElementById("startModal").classList.remove("hidden");
+  </script>
+</body>
+</html>
