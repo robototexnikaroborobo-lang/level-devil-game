@@ -8,555 +8,211 @@
     * { box-sizing: border-box; }
     html, body {
       margin: 0;
-      padding: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #0a0e27;
+      background: #090d1f;
       color: white;
-      font-family: 'Arial', sans-serif;
+      font-family: Arial, sans-serif;
     }
-    .container {
-      width: 100vw;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-    }
-    .header {
-      position: absolute;
-      top: 16px;
-      left: 16px;
-      z-index: 10;
-      display: flex;
-      gap: 16px;
-      align-items: center;
-    }
-    .hud {
-      padding: 12px 20px;
-      background: rgba(0,0,0,0.5);
-      border: 2px solid #3b82f6;
-      border-radius: 999px;
-      font-weight: bold;
-      letter-spacing: 1px;
-      font-size: 14px;
-    }
-    .stats {
-      padding: 12px 16px;
-      background: rgba(0,0,0,0.5);
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 8px;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-    .stats div {
-      display: flex;
-      gap: 8px;
+    body {
+      display: grid;
+      place-items: center;
     }
     #game {
+      width: min(96vw, 1200px);
+      height: min(82vh, 600px);
       display: block;
-      background: linear-gradient(135deg, #1a1b3f 0%, #0f0f2e 50%, #0a0a1f 100%);
-      border: 4px solid #3b82f6;
-      border-radius: 16px;
-      box-shadow: 0 0 40px rgba(59, 130, 246, 0.3), 0 20px 60px rgba(0,0,0,0.7);
-      max-width: 95vw;
-      max-height: 85vh;
+      border: 4px solid #4ea2ff;
+      border-radius: 18px;
+      background: linear-gradient(#111a2a, #0b1223 45%, #070c18 100%);
+      box-shadow: 0 0 30px rgba(78, 162, 255, 0.35);
+    }
+    .hud {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(0,0,0,0.45);
+      border: 2px solid rgba(78, 162, 255, 0.9);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 14px;
+      z-index: 10;
+      line-height: 1.6;
     }
     .help {
       position: absolute;
       bottom: 16px;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 12px;
-      color: #bfdbfe;
-      opacity: 0.85;
       background: rgba(0,0,0,0.4);
-      padding: 10px 16px;
+      color: #dfeaff;
+      border: 1px solid rgba(78, 162, 255, 0.5);
       border-radius: 999px;
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      text-align: center;
-      z-index: 10;
+      padding: 8px 14px;
+      font-size: 12px;
+      white-space: nowrap;
     }
-    .modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.85);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      backdrop-filter: blur(4px);
-    }
-    .modal-content {
-      background: linear-gradient(135deg, #1a1b3f, #0f0f2e);
-      padding: 40px;
-      border-radius: 16px;
-      border: 2px solid #3b82f6;
-      text-align: center;
-      max-width: 500px;
-      box-shadow: 0 0 60px rgba(59, 130, 246, 0.4);
-    }
-    .modal h1 {
-      font-size: 48px;
-      margin: 0 0 20px 0;
-      color: #fbbf24;
-      text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
-    }
-    .modal h2 {
-      font-size: 28px;
-      margin: 0 0 16px 0;
-      color: #60a5fa;
-    }
-    .modal p {
-      font-size: 16px;
-      margin: 8px 0;
-      color: #d1d5db;
-      line-height: 1.6;
-    }
-    .modal button {
-      margin-top: 24px;
-      padding: 12px 32px;
-      font-size: 16px;
-      font-weight: bold;
-      background: linear-gradient(135deg, #3b82f6, #1e40af);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    .modal button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
-    }
-    .hidden { display: none; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <div class="hud" id="hud">Level 1/30</div>
-      <div class="stats">
-        <div>Deaths: <span id="deathCount">0</span></div>
-        <div>Time: <span id="timer">0s</span></div>
-      </div>
-    </div>
-    <canvas id="game" width="1200" height="600"></canvas>
-    <div class="help">Move: A/D or ←/→ · Jump: W / ↑ / Space · Restart: R · Sound: M</div>
-  </div>
-
-  <div class="modal hidden" id="startModal">
-    <div class="modal-content">
-      <h1>LEVEL DEVIL</h1>
-      <p>A deceptive platformer</p>
-      <p>Reach the exit... if you can find it.</p>
-      <button onclick="startGame()">START GAME</button>
-    </div>
-  </div>
-
-  <div class="modal hidden" id="winModal">
-    <div class="modal-content">
-      <h2 id="winTitle">Level Complete!</h2>
-      <p id="winMessage"></p>
-      <button onclick="nextLevel()">NEXT LEVEL</button>
-    </div>
-  </div>
-
-  <div class="modal hidden" id="gameOverModal">
-    <div class="modal-content">
-      <h2>GAME OVER</h2>
-      <p id="gameOverMessage"></p>
-      <button onclick="resetLevel()">RETRY</button>
-      <button onclick="startGame()">RESTART FROM LEVEL 1</button>
-    </div>
-  </div>
+  <div class="hud" id="hud"></div>
+  <canvas id="game" width="1200" height="600"></canvas>
+  <div class="help">Move: A/D or ←/→ · Jump: W / ↑ / Space · Restart: R · Sound: M</div>
 
   <script>
-    class SoundManager {
-      constructor() {
-        this.enabled = true;
-        this.audioContext = null;
-      }
-      init() {
-        if (!this.audioContext) {
-          this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-      }
-      play(type) {
-        if (!this.enabled || !this.audioContext) return;
-        const now = this.audioContext.currentTime;
-        const osc = this.audioContext.createOscillator();
-        const gain = this.audioContext.createGain();
-        osc.connect(gain);
-        gain.connect(this.audioContext.destination);
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const hud = document.getElementById('hud');
 
-        switch(type) {
-          case 'jump':
-            osc.frequency.setValueAtTime(620, now);
-            osc.frequency.exponentialRampToValueAtTime(200, now + 0.18);
-            gain.gain.setValueAtTime(0.08, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
-            break;
-          case 'death':
-            osc.frequency.setValueAtTime(260, now);
-            osc.frequency.exponentialRampToValueAtTime(60, now + 0.35);
-            gain.gain.setValueAtTime(0.18, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-            break;
-          case 'levelup':
-            for (let i = 0; i < 4; i++) {
-              const o = this.audioContext.createOscillator();
-              const g = this.audioContext.createGain();
-              o.connect(g);
-              g.connect(this.audioContext.destination);
-              o.frequency.value = 420 + i * 180;
-              g.gain.setValueAtTime(0.08, now + i * 0.08);
-              g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.08 + 0.14);
-              o.start(now + i * 0.08);
-              o.stop(now + i * 0.08 + 0.14);
-            }
-            return;
-          case 'trap':
-            osc.frequency.setValueAtTime(200, now);
-            osc.frequency.exponentialRampToValueAtTime(90, now + 0.2);
-            gain.gain.setValueAtTime(0.14, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-            break;
-          default:
-            osc.frequency.setValueAtTime(350, now);
-            gain.gain.setValueAtTime(0.05, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
-        }
-        osc.start(now);
-        osc.stop(now + 0.25);
-      }
-      toggle() {
-        this.enabled = !this.enabled;
-        return this.enabled;
+    const keys = {};
+    let currentLevel = 0;
+    let player = null;
+    let gameOver = false;
+    let totalDeaths = 0;
+    let levelDeaths = 0;
+    let levelStartTime = 0;
+    let gameStarted = false;
+    let audioCtx = null;
+
+    // Basic sound manager with no errors if browser blocks audio
+    function initAudio() {
+      if (!audioCtx && window.AudioContext) {
+        audioCtx = new AudioContext();
       }
     }
 
-    const soundManager = new SoundManager();
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
-    const hud = document.getElementById("hud");
-    const deathCount = document.getElementById("deathCount");
-    const timer = document.getElementById("timer");
-    const startModal = document.getElementById("startModal");
+    function playTone(freq, duration, type = 'sine', volume = 0.04) {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.value = volume;
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
 
-    const keys = {};
-    window.addEventListener("keydown", (e) => {
-      const k = e.key.toLowerCase();
-      if (["arrowup","arrowdown","arrowleft","arrowright"," "].includes(k) || k === " ") {
-        e.preventDefault();
+    function playSound(name) {
+      if (!audioCtx) return;
+      if (name === 'jump') playTone(520, 0.12, 'square', 0.05);
+      if (name === 'death') playTone(180, 0.3, 'sawtooth', 0.08);
+      if (name === 'win') {
+        playTone(440, 0.12, 'triangle', 0.06);
+        setTimeout(() => playTone(660, 0.12, 'triangle', 0.06), 100);
+        setTimeout(() => playTone(880, 0.18, 'triangle', 0.06), 200);
       }
-      keys[k] = true;
-      if (k === "r") resetLevel();
-      if (k === "m") {
-        const enabled = soundManager.toggle();
-        console.log("Sound: " + (enabled ? "ON" : "OFF"));
-      }
-    });
-    window.addEventListener("keyup", (e) => {
-      keys[e.key.toLowerCase()] = false;
-    });
+      if (name === 'trap') playTone(220, 0.18, 'sawtooth', 0.06);
+    }
 
     const levels = [
       {
-        name: "Simple Start",
-        start: { x: 30, y: 450 },
+        name: 'Level 1',
+        start: { x: 50, y: 460 },
         platforms: [
           { x: 0, y: 540, w: 260, h: 60 },
           { x: 340, y: 480, w: 180, h: 20 },
           { x: 570, y: 420, w: 150, h: 20 },
-          { x: 760, y: 350, w: 140, h: 20 },
-          { x: 930, y: 540, w: 270, h: 60 }
+          { x: 760, y: 340, w: 150, h: 20 },
+          { x: 960, y: 540, w: 220, h: 60 }
         ],
         spikes: [
           { x: 260, y: 540, w: 70, h: 20 },
-          { x: 520, y: 540, w: 40, h: 20 }
+          { x: 520, y: 540, w: 35, h: 20 }
         ],
         doors: [
-          { x: 1110, y: 460, w: 60, h: 90, fake: false }
+          { x: 1115, y: 450, w: 60, h: 90, fake: false }
         ],
-        message: "Just reach the green door."
+        message: 'Reach the green door.'
       },
       {
-        name: "First Trap",
-        start: { x: 30, y: 450 },
+        name: 'Level 2',
+        start: { x: 50, y: 460 },
         platforms: [
-          { x: 0, y: 540, w: 280, h: 60 },
-          { x: 360, y: 480, w: 160, h: 20 },
-          { x: 580, y: 420, w: 140, h: 20 },
-          { x: 770, y: 500, w: 160, h: 20 },
-          { x: 970, y: 540, w: 230, h: 60 }
+          { x: 0, y: 540, w: 260, h: 60 },
+          { x: 330, y: 480, w: 150, h: 20 },
+          { x: 560, y: 420, w: 130, h: 20 },
+          { x: 760, y: 500, w: 180, h: 20 },
+          { x: 1030, y: 540, w: 170, h: 60 }
         ],
         spikes: [
-          { x: 280, y: 540, w: 60, h: 20 },
-          { x: 520, y: 540, w: 30, h: 20 },
-          { x: 720, y: 540, w: 30, h: 20 }
+          { x: 260, y: 540, w: 55, h: 20 },
+          { x: 510, y: 540, w: 30, h: 20 },
+          { x: 940, y: 540, w: 40, h: 20 }
         ],
         doors: [
-          { x: 1140, y: 460, w: 60, h: 90, fake: false },
+          { x: 1160, y: 450, w: 60, h: 90, fake: false },
           { x: 800, y: 400, w: 60, h: 90, fake: true }
         ],
-        message: "Red doors are traps."
+        message: 'The red door is a trap.'
       },
       {
-        name: "Disappearing Act",
-        start: { x: 30, y: 450 },
+        name: 'Level 3',
+        start: { x: 50, y: 460 },
         platforms: [
           { x: 0, y: 540, w: 280, h: 60 },
           { x: 360, y: 480, w: 160, h: 20 },
-          { x: 580, y: 420, w: 140, h: 20, disappearOnTouch: true },
-          { x: 770, y: 470, w: 180, h: 20 },
-          { x: 1000, y: 540, w: 200, h: 60 }
+          { x: 560, y: 420, w: 140, h: 20, disappearOnTouch: true },
+          { x: 760, y: 470, w: 180, h: 20 },
+          { x: 1020, y: 540, w: 180, h: 60 }
         ],
         spikes: [
           { x: 280, y: 540, w: 60, h: 20 },
           { x: 520, y: 540, w: 30, h: 20 },
-          { x: 750, y: 540, w: 30, h: 20 }
+          { x: 740, y: 540, w: 30, h: 20 }
         ],
         doors: [
-          { x: 1140, y: 460, w: 60, h: 90, fake: false }
+          { x: 1140, y: 450, w: 60, h: 90, fake: false }
         ],
-        message: "Some platforms disappear when you step on them."
+        message: 'Some platforms vanish.'
       },
       {
-        name: "Double Fake",
-        start: { x: 30, y: 450 },
+        name: 'Level 4',
+        start: { x: 50, y: 460 },
         platforms: [
           { x: 0, y: 540, w: 300, h: 60 },
           { x: 380, y: 480, w: 160, h: 20 },
-          { x: 600, y: 420, w: 150, h: 20 },
-          { x: 800, y: 350, w: 120, h: 20 },
+          { x: 610, y: 420, w: 140, h: 20 },
+          { x: 820, y: 340, w: 150, h: 20 },
           { x: 1000, y: 540, w: 200, h: 60 }
         ],
         spikes: [
           { x: 300, y: 540, w: 60, h: 20 },
           { x: 540, y: 540, w: 35, h: 20 },
           { x: 750, y: 540, w: 35, h: 20 },
-          { x: 920, y: 540, w: 35, h: 20 }
+          { x: 970, y: 540, w: 35, h: 20 }
         ],
         doors: [
-          { x: 1150, y: 460, w: 60, h: 90, fake: false },
-          { x: 820, y: 250, w: 60, h: 90, fake: true },
-          { x: 600, y: 310, w: 60, h: 90, fake: true }
+          { x: 1160, y: 450, w: 60, h: 90, fake: false },
+          { x: 680, y: 300, w: 60, h: 90, fake: true },
+          { x: 850, y: 250, w: 60, h: 90, fake: true }
         ],
-        message: "Two fake exits. Only one is real."
+        message: 'Two fake exits. One real.'
       },
       {
-        name: "Reverse Controls",
-        start: { x: 30, y: 450 },
+        name: 'Level 5',
+        start: { x: 50, y: 460 },
         platforms: [
-          { x: 0, y: 540, w: 280, h: 60 },
-          { x: 360, y: 480, w: 160, h: 20 },
-          { x: 580, y: 420, w: 140, h: 20 },
-          { x: 800, y: 360, w: 160, h: 20 },
-          { x: 1000, y: 540, w: 200, h: 60 }
+          { x: 0, y: 540, w: 260, h: 60 },
+          { x: 350, y: 480, w: 170, h: 20 },
+          { x: 600, y: 420, w: 130, h: 20 },
+          { x: 820, y: 360, w: 150, h: 20 },
+          { x: 1030, y: 540, w: 170, h: 60 }
         ],
         spikes: [
-          { x: 280, y: 540, w: 60, h: 20 },
+          { x: 260, y: 540, w: 60, h: 20 },
           { x: 520, y: 540, w: 30, h: 20 },
-          { x: 720, y: 540, w: 40, h: 20 },
-          { x: 960, y: 540, w: 30, h: 20 }
+          { x: 730, y: 540, w: 30, h: 20 },
+          { x: 970, y: 540, w: 30, h: 20 }
         ],
         doors: [
-          { x: 1150, y: 460, w: 60, h: 90, fake: false }
+          { x: 1160, y: 450, w: 60, h: 90, fake: false }
         ],
-        message: "Your controls will flip. Be ready.",
-        controlFlip: { triggerX: 700, duration: 120 }
-      },
-      {
-        name: "Spike Maze",
-        start: { x: 30, y: 450 },
-        platforms: [
-          { x: 0, y: 540, w: 300, h: 60 },
-          { x: 380, y: 480, w: 160, h: 20 },
-          { x: 580, y: 420, w: 160, h: 20 },
-          { x: 800, y: 360, w: 160, h: 20 },
-          { x: 1020, y: 540, w: 180, h: 60 }
-        ],
-        spikes: [
-          { x: 300, y: 540, w: 65, h: 20 },
-          { x: 540, y: 540, w: 30, h: 20 },
-          { x: 740, y: 540, w: 50, h: 20 },
-          { x: 960, y: 540, w: 50, h: 20 }
-        ],
-        doors: [
-          { x: 1150, y: 460, w: 60, h: 90, fake: false }
-        ],
-        message: "Navigate through the spikes."
-      },
-      {
-        name: "Hidden Exit",
-        start: { x: 30, y: 450 },
-        platforms: [
-          { x: 0, y: 540, w: 280, h: 60 },
-          { x: 360, y: 480, w: 160, h: 20 },
-          { x: 580, y: 420, w: 140, h: 20 },
-          { x: 780, y: 500, w: 150, h: 20 },
-          { x: 1000, y: 540, w: 200, h: 60 }
-        ],
-        spikes: [
-          { x: 280, y: 540, w: 60, h: 20 },
-          { x: 520, y: 540, w: 30, h: 20 },
-          { x: 720, y: 540, w: 40, h: 20 },
-          { x: 950, y: 540, w: 40, h: 20 }
-        ],
-        doors: [
-          { x: 1140, y: 460, w: 60, h: 90, fake: false },
-          { x: 360, y: 380, w: 60, h: 90, fake: true },
-          { x: 600, y: 320, w: 60, h: 90, fake: true }
-        ],
-        message: "Multiple doors. Find the real one."
-      },
-      {
-        name: "Moving Hazard",
-        start: { x: 30, y: 450 },
-        platforms: [
-          { x: 0, y: 540, w: 300, h: 60 },
-          { x: 380, y: 480, w: 160, h: 20 },
-          { x: 600, y: 420, w: 140, h: 20 },
-          { x: 800, y: 360, w: 140, h: 20 },
-          { x: 1000, y: 540, w: 200, h: 60 }
-        ],
-        spikes: [
-          { x: 300, y: 540, w: 65, h: 20 },
-          { x: 540, y: 540, w: 35, h: 20 },
-          { x: 740, y: 540, w: 35, h: 20 },
-          { x: 960, y: 540, w: 30, h: 20 }
-        ],
-        saws: [
-          { x: 400, y: 300, r: 25, direction: 1, speed: 2 }
-        ],
-        doors: [
-          { x: 1140, y: 460, w: 60, h: 90, fake: false }
-        ],
-        message: "Watch out for the saw."
-      },
-      {
-        name: "The Deceiver",
-        start: { x: 30, y: 450 },
-        platforms: [
-          { x: 0, y: 540, w: 300, h: 60 },
-          { x: 380, y: 470, w: 150, h: 20 },
-          { x: 570, y: 410, w: 140, h: 20, disappearOnTouch: true },
-          { x: 760, y: 470, w: 160, h: 20 },
-          { x: 990, y: 540, w: 210, h: 60 }
-        ],
-        spikes: [
-          { x: 300, y: 540, w: 65, h: 20 },
-          { x: 530, y: 540, w: 30, h: 20 },
-          { x: 710, y: 540, w: 40, h: 20 },
-          { x: 950, y: 540, w: 35, h: 20 }
-        ],
-        doors: [
-          { x: 1160, y: 460, w: 60, h: 90, fake: false },
-          { x: 390, y: 370, w: 60, h: 90, fake: true }
-        ],
-        message: "Trust nothing.",
-        controlFlip: { triggerX: 650, duration: 100 }
-      },
-      {
-        name: "Final Challenge",
-        start: { x: 30, y: 450 },
-        platforms: [
-          { x: 0, y: 540, w: 300, h: 60 },
-          { x: 380, y: 480, w: 140, h: 20 },
-          { x: 560, y: 420, w: 130, h: 20, disappearOnTouch: true },
-          { x: 740, y: 360, w: 150, h: 20 },
-          { x: 950, y: 470, w: 160, h: 20, disappearOnTouch: true },
-          { x: 1050, y: 540, w: 150, h: 60 }
-        ],
-        spikes: [
-          { x: 300, y: 540, w: 65, h: 20 },
-          { x: 520, y: 540, w: 30, h: 20 },
-          { x: 690, y: 540, w: 40, h: 20 },
-          { x: 890, y: 540, w: 50, h: 20 }
-        ],
-        saws: [
-          { x: 650, y: 280, r: 20, direction: 1, speed: 2.5 }
-        ],
-        doors: [
-          { x: 1165, y: 460, w: 60, h: 90, fake: false },
-          { x: 760, y: 260, w: 60, h: 90, fake: true }
-        ],
-        message: "Almost there. Don't give up.",
-        controlFlip: { triggerX: 700, duration: 150 }
-      },
-      ...Array.from({ length: 20 }, (_, i) => ({
-        name: `Level ${11 + i}`,
-        start: { x: 30, y: 450 },
-        platforms: generateRandomLevel(i + 11),
-        spikes: generateRandomSpikes(i + 11),
-        saws: i % 3 === 0 ? [{ x: 400 + i * 30, y: 250 + i * 10, r: 20, direction: 1, speed: 2 + i * 0.1 }] : [],
-        doors: [
-          { x: 1140, y: 460, w: 60, h: 90, fake: false },
-          ...generateFakeDoors(i + 11)
-        ],
-        message: ["Keep going!", "You got this!", "Almost there!", "Don't stop!", "One more push!"][i % 5],
-        controlFlip: i % 4 === 0 ? { triggerX: 600 + i * 20, duration: 120 + i * 5 } : undefined
-      }))
+        message: 'Your controls flip later.'
+      }
     ];
-
-    function generateRandomLevel(seed) {
-      const platforms = [
-        { x: 0, y: 540, w: 300 + seed * 2, h: 60 }
-      ];
-      for (let i = 0; i < 4 + seed % 3; i++) {
-        platforms.push({
-          x: 350 + i * 200 + seed * 5,
-          y: 480 - i * 50 - (seed % 10) * 3,
-          w: 140 + (seed % 20),
-          h: 20,
-          disappearOnTouch: seed % (i + 2) === 0
-        });
-      }
-      platforms.push({ x: 1000, y: 540, w: 200, h: 60 });
-      return platforms;
-    }
-
-    function generateRandomSpikes(seed) {
-      const spikes = [];
-      for (let i = 0; i < 4 + seed % 3; i++) {
-        spikes.push({
-          x: 280 + i * 240 + seed * 3,
-          y: 540,
-          w: 30 + (seed % 40),
-          h: 20
-        });
-      }
-      return spikes;
-    }
-
-    function generateFakeDoors(seed) {
-      const count = 1 + seed % 3;
-      const doors = [];
-      for (let i = 0; i < count; i++) {
-        doors.push({
-          x: 400 + i * 300 + seed * 10,
-          y: 300 - i * 80,
-          w: 60,
-          h: 90,
-          fake: true
-        });
-      }
-      return doors;
-    }
-
-    let currentLevel = 0;
-    let player = null;
-    let gameOver = false;
-    let levelStartTime = 0;
-    let totalDeaths = 0;
-    let levelDeaths = 0;
-    let gameStarted = false;
 
     function createPlayer(x, y) {
       return {
@@ -565,9 +221,9 @@
         h: 42,
         vx: 0,
         vy: 0,
-        speed: 5,
-        jumpForce: 14.5,
-        gravity: 0.75,
+        speed: 4.8,
+        jumpForce: 14,
+        gravity: 0.72,
         onGround: false,
         dir: 1,
         flipped: false,
@@ -576,32 +232,21 @@
       };
     }
 
-    function startGame() {
-      soundManager.init();
-      gameStarted = true;
-      totalDeaths = 0;
-      deathCount.textContent = totalDeaths;
-      loadLevel(0);
-      startModal.classList.add('hidden');
-    }
-
     function loadLevel(index) {
-      currentLevel = Math.min(index, levels.length - 1);
+      currentLevel = index;
       const level = levels[currentLevel];
       player = createPlayer(level.start.x, level.start.y);
       gameOver = false;
       levelDeaths = 0;
       levelStartTime = Date.now();
-      hud.textContent = `Level ${currentLevel + 1}/${levels.length}`;
-      for (const p of level.platforms) p.triggered = false;
+      hud.innerHTML = `Level ${currentLevel + 1}/${levels.length}<br>Deaths: ${totalDeaths}<br>Time: 0s`;
+      level.platforms.forEach(p => p.triggered = false);
     }
 
     function resetLevel() {
       if (!gameStarted) return;
-      soundManager.play('death');
-      levelDeaths++;
-      totalDeaths++;
-      deathCount.textContent = totalDeaths;
+      totalDeaths += 1;
+      playSound('death');
       loadLevel(currentLevel);
     }
 
@@ -613,71 +258,44 @@
     }
 
     function getActivePlatforms() {
-      const level = levels[currentLevel];
-      return level.platforms.filter(p => !(p.disappearOnTouch && p.triggered));
+      return levels[currentLevel].platforms.filter(p => !(p.disappearOnTouch && p.triggered));
     }
 
     function hitSpike() {
-      const level = levels[currentLevel];
-      for (const spike of level.spikes) {
+      for (const spike of levels[currentLevel].spikes) {
         if (rectsIntersect(player, spike)) return true;
       }
       return false;
     }
 
-    function hitSaw() {
-      const level = levels[currentLevel];
-      if (!level.saws) return false;
-      for (const saw of level.saws) {
-        const dx = (player.x + player.w / 2) - saw.x;
-        const dy = (player.y + player.h / 2) - saw.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < saw.r + 15) return true;
-      }
-      return false;
-    }
-
-    function checkDoor() {
-      const level = levels[currentLevel];
-      for (const door of level.doors) {
+    function hitDoor() {
+      for (const door of levels[currentLevel].doors) {
         if (door.fake && rectsIntersect(player, door)) return 'fake';
         if (!door.fake && rectsIntersect(player, door)) return 'goal';
       }
       return null;
     }
 
-    function nextLevel() {
-      soundManager.play('levelup');
+    function winLevel() {
+      playSound('win');
       if (currentLevel < levels.length - 1) {
-        document.getElementById('winModal').classList.remove('hidden');
-        document.getElementById('winTitle').textContent = `Level ${currentLevel + 1} Complete!`;
-        document.getElementById('winMessage').textContent = `Deaths: ${levelDeaths} | Time: ${Math.floor((Date.now() - levelStartTime) / 1000)}s`;
+        currentLevel += 1;
+        loadLevel(currentLevel);
       } else {
-        document.getElementById('winModal').classList.remove('hidden');
-        document.getElementById('winTitle').textContent = 'YOU ESCAPED THE DEVIL!';
-        document.getElementById('winMessage').textContent = `Total Deaths: ${totalDeaths} | Final Time: ${Math.floor((Date.now() - levelStartTime) / 1000)}s`;
+        alert('You escaped the devil!');
+        currentLevel = 0;
+        loadLevel(currentLevel);
       }
     }
 
-    function goToNextLevel() {
-      document.getElementById('winModal').classList.add('hidden');
-      loadLevel(currentLevel + 1);
-    }
-
-    function die() {
-      if (gameOver || !gameStarted) return;
-      gameOver = true;
-      soundManager.play('death');
-      setTimeout(resetLevel, 300);
-    }
-
     function update() {
-      if (gameOver || !gameStarted || !player) return;
+      if (!gameStarted || !player || gameOver) return;
+
       const level = levels[currentLevel];
 
       let moveX = 0;
-      if (keys.d || keys.arrowright) moveX += 1;
-      if (keys.a || keys.arrowleft) moveX -= 1;
+      if (keys['d'] || keys['arrowright']) moveX += 1;
+      if (keys['a'] || keys['arrowleft']) moveX -= 1;
 
       if (player.flipped) moveX *= -1;
 
@@ -688,10 +306,10 @@
         player.vx = 0;
       }
 
-      if ((keys.w || keys.arrowup || keys[' ']) && player.onGround) {
+      if ((keys['w'] || keys['arrowup'] || keys[' ']) && player.onGround) {
         player.vy = -player.jumpForce;
         player.onGround = false;
-        soundManager.play('jump');
+        playSound('jump');
       }
 
       if (player.flipTimer > 0) {
@@ -700,151 +318,124 @@
         player.flipped = false;
       }
 
-      if (level.controlFlip && player.x > level.controlFlip.triggerX && !player.flipped) {
+      if (level.name === 'Level 5' && player.x > 700 && !player.flipped) {
         player.flipped = true;
-        player.flipTimer = level.controlFlip.duration;
-        soundManager.play('trap');
+        player.flipTimer = 120;
+        playSound('trap');
       }
 
       player.vy += player.gravity;
       player.x += player.vx;
 
-      for (const p of getActivePlatforms()) {
-        if (rectsIntersect(player, p)) {
-          if (player.vx > 0) player.x = p.x - player.w;
-          if (player.vx < 0) player.x = p.x + p.w;
+      for (const platform of getActivePlatforms()) {
+        if (rectsIntersect(player, platform)) {
+          if (player.vx > 0) player.x = platform.x - player.w;
+          if (player.vx < 0) player.x = platform.x + platform.w;
         }
       }
 
       player.y += player.vy;
       player.onGround = false;
 
-      for (const p of getActivePlatforms()) {
-        if (rectsIntersect(player, p)) {
+      for (const platform of getActivePlatforms()) {
+        if (rectsIntersect(player, platform)) {
           if (player.vy > 0) {
-            player.y = p.y - player.h;
+            player.y = platform.y - player.h;
             player.vy = 0;
             player.onGround = true;
           } else if (player.vy < 0) {
-            player.y = p.y + p.h;
+            player.y = platform.y + platform.h;
             player.vy = 0;
           }
 
-          if (p.disappearOnTouch && !p.triggered) {
-            p.triggered = true;
+          if (platform.disappearOnTouch && !platform.triggered) {
+            platform.triggered = true;
           }
         }
       }
 
-      if (player.y > canvas.height + 100) die();
+      if (player.y > canvas.height + 80) {
+        resetLevel();
+        return;
+      }
+
       if (player.x < 0) player.x = 0;
       if (player.x + player.w > 1600) player.x = 1600 - player.w;
 
-      if (hitSpike()) die();
-      if (hitSaw()) die();
-
-      const doorState = checkDoor();
-      if (doorState === 'fake') {
-        soundManager.play('trap');
-        die();
+      if (hitSpike()) {
+        resetLevel();
+        return;
       }
-      if (doorState === 'goal') nextLevel();
+
+      const doorState = hitDoor();
+      if (doorState === 'fake') {
+        playSound('trap');
+        resetLevel();
+        return;
+      }
+      if (doorState === 'goal') {
+        winLevel();
+        return;
+      }
 
       const elapsed = Math.floor((Date.now() - levelStartTime) / 1000);
-      timer.textContent = elapsed + 's';
+      hud.innerHTML = `Level ${currentLevel + 1}/${levels.length}<br>Deaths: ${totalDeaths}<br>Time: ${elapsed}s`;
     }
 
     function drawBackground() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      grad.addColorStop(0, '#1a1b3f');
-      grad.addColorStop(0.5, '#0f0f2e');
-      grad.addColorStop(1, '#0a0a1f');
-      ctx.fillStyle = grad;
+      const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      g.addColorStop(0, '#1d2440');
+      g.addColorStop(1, '#0b0f1a');
+      ctx.fillStyle = g;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = 'rgba(255,255,255,0.03)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
       for (let x = 0; x < canvas.width; x += 40) {
-        ctx.fillRect(x, 0, 1, canvas.height);
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
       }
       for (let y = 0; y < canvas.height; y += 40) {
-        ctx.fillRect(0, y, canvas.width, 1);
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
       }
     }
 
     function drawPlatforms() {
-      const level = levels[currentLevel];
-      for (const p of getActivePlatforms()) {
-        const gradient = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
-        gradient.addColorStop(0, '#64748b');
-        gradient.addColorStop(1, '#475569');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(p.x, p.y, p.w, p.h);
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillRect(p.x + 3, p.y + 3, p.w - 6, p.h - 6);
+      for (const platform of getActivePlatforms()) {
+        const grad = ctx.createLinearGradient(platform.x, platform.y, platform.x, platform.y + platform.h);
+        grad.addColorStop(0, '#8aa0b8');
+        grad.addColorStop(1, '#687a91');
+        ctx.fillStyle = grad;
+        ctx.fillRect(platform.x, platform.y, platform.w, platform.h);
       }
 
-      for (const d of level.doors) {
-        const gradient = ctx.createLinearGradient(d.x, d.y, d.x, d.y + d.h);
-        gradient.addColorStop(0, d.fake ? '#dc2626' : '#16a34a');
-        gradient.addColorStop(1, d.fake ? '#7f1d1d' : '#15803d');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(d.x, d.y, d.w, d.h);
-        ctx.fillStyle = '#e2e8f0';
-        ctx.fillRect(d.x + 8, d.y + 8, d.w - 16, d.h - 16);
+      for (const door of levels[currentLevel].doors) {
+        ctx.fillStyle = door.fake ? '#e05252' : '#3bd17a';
+        ctx.fillRect(door.x, door.y, door.w, door.h);
+        ctx.fillStyle = '#dfe9ff';
+        ctx.fillRect(door.x + 10, door.y + 10, door.w - 20, door.h - 20);
       }
     }
 
     function drawSpikes() {
-      const level = levels[currentLevel];
-      for (const s of level.spikes) {
-        ctx.fillStyle = '#ef4444';
-        const count = Math.max(3, Math.floor(s.w / 6));
-        const step = s.w / count;
+      for (const spike of levels[currentLevel].spikes) {
+        ctx.fillStyle = '#e94f4f';
+        const count = Math.max(3, Math.floor(spike.w / 7));
+        const step = spike.w / count;
         for (let i = 0; i < count; i++) {
-          const x = s.x + i * step;
+          const x = spike.x + i * step;
           ctx.beginPath();
-          ctx.moveTo(x, s.y + s.h);
-          ctx.lineTo(x + step / 2, s.y);
-          ctx.lineTo(x + step, s.y + s.h);
+          ctx.moveTo(x, spike.y + spike.h);
+          ctx.lineTo(x + step / 2, spike.y);
+          ctx.lineTo(x + step, spike.y + spike.h);
           ctx.closePath();
           ctx.fill();
         }
-      }
-    }
-
-    function drawSaws() {
-      const level = levels[currentLevel];
-      if (!level.saws) return;
-      for (const saw of level.saws) {
-        saw.x += saw.speed * saw.direction;
-        if (saw.x < 200) saw.direction = 1;
-        if (saw.x > canvas.width - 200) saw.direction = -1;
-
-        ctx.save();
-        ctx.translate(saw.x, saw.y);
-        ctx.rotate((Date.now() / 20) % (Math.PI * 2));
-
-        ctx.fillStyle = '#64748b';
-        ctx.beginPath();
-        ctx.arc(0, 0, saw.r, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#ef4444';
-        for (let i = 0; i < 8; i++) {
-          const angle = (i / 8) * Math.PI * 2;
-          const x1 = Math.cos(angle) * (saw.r - 5);
-          const y1 = Math.sin(angle) * (saw.r - 5);
-          const x2 = Math.cos(angle + 0.3) * saw.r;
-          const y2 = Math.sin(angle + 0.3) * saw.r;
-          ctx.beginPath();
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-          ctx.lineWidth = 2;
-          ctx.stroke();
-        }
-
-        ctx.restore();
       }
     }
 
@@ -854,40 +445,25 @@
       ctx.save();
       ctx.translate(player.x, player.y);
 
-      ctx.fillStyle = player.flipped ? '#f87171' : '#facc15';
+      ctx.fillStyle = player.flipped ? '#ff7d7d' : '#f7c948';
       ctx.fillRect(0, 0, player.w, player.h);
 
-      ctx.fillStyle = '#1f2937';
-      ctx.fillRect(player.dir > 0 ? 7 : 14, 8, 4, 4);
-      ctx.fillRect(player.dir > 0 ? 17 : 5, 8, 4, 4);
+      ctx.fillStyle = '#1d2430';
+      const leftEyeX = player.dir > 0 ? 8 : 15;
+      const rightEyeX = player.dir > 0 ? 18 : 5;
+      ctx.fillRect(leftEyeX, 10, 4, 4);
+      ctx.fillRect(rightEyeX, 10, 4, 4);
 
-      ctx.fillStyle = '#f8fafc';
-      ctx.fillRect(4, 30, player.w - 8, 5);
-
+      ctx.fillStyle = '#f8f9ff';
+      ctx.fillRect(6, 30, player.w - 12, 4);
       ctx.restore();
-
-      if (player.flipTimer > 0) {
-        ctx.fillStyle = 'rgba(248, 113, 113, 0.25)';
-        ctx.fillRect(player.x - 6, player.y - 6, player.w + 12, player.h + 12);
-      }
-    }
-
-    function drawMessage() {
-      const level = levels[currentLevel];
-      ctx.fillStyle = 'rgba(0,0,0,0.4)';
-      ctx.fillRect(16, 16, 450, 35);
-      ctx.fillStyle = '#fef3c7';
-      ctx.font = 'bold 16px Arial';
-      ctx.fillText(level.message, 28, 42);
     }
 
     function draw() {
       drawBackground();
       drawPlatforms();
       drawSpikes();
-      drawSaws();
       drawPlayer();
-      drawMessage();
     }
 
     function loop() {
@@ -896,12 +472,35 @@
       requestAnimationFrame(loop);
     }
 
-    window.startGame = startGame;
-    window.nextLevel = goToNextLevel;
-    window.resetLevel = resetLevel;
+    window.addEventListener('keydown', (event) => {
+      const key = event.key.toLowerCase();
+      if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(key) || key === ' ') {
+        event.preventDefault();
+      }
+      keys[key] = true;
+      if (key === 'r') resetLevel();
+      if (key === 'm') {
+        initAudio();
+        if (audioCtx) {
+          audioCtx.resume();
+        }
+      }
+    });
+
+    window.addEventListener('keyup', (event) => {
+      keys[event.key.toLowerCase()] = false;
+    });
+
+    function startGame() {
+      initAudio();
+      gameStarted = true;
+      totalDeaths = 0;
+      currentLevel = 0;
+      loadLevel(0);
+    }
 
     startGame();
-    loop();
+    requestAnimationFrame(loop);
   </script>
 </body>
 </html>
