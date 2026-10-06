@@ -177,45 +177,36 @@
   </div>
 
   <script>
-    // ============= AUDIO CONTEXT =============
     class SoundManager {
       constructor() {
         this.enabled = true;
         this.audioContext = null;
       }
-
       init() {
         if (!this.audioContext) {
           this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
       }
-
-      play(type, duration = 0.1, freq1 = 400, freq2 = 200) {
+      play(type) {
         if (!this.enabled || !this.audioContext) return;
-
         const now = this.audioContext.currentTime;
         const osc = this.audioContext.createOscillator();
         const gain = this.audioContext.createGain();
-
         osc.connect(gain);
         gain.connect(this.audioContext.destination);
 
         switch(type) {
           case 'jump':
-            osc.frequency.setValueAtTime(600, now);
-            osc.frequency.exponentialRampToValueAtTime(200, now + 0.15);
-            gain.gain.setValueAtTime(0.1, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-            osc.start(now);
-            osc.stop(now + 0.15);
+            osc.frequency.setValueAtTime(620, now);
+            osc.frequency.exponentialRampToValueAtTime(200, now + 0.18);
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
             break;
           case 'death':
-            osc.frequency.setValueAtTime(300, now);
-            osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
-            gain.gain.setValueAtTime(0.2, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-            osc.start(now);
-            osc.stop(now + 0.3);
+            osc.frequency.setValueAtTime(260, now);
+            osc.frequency.exponentialRampToValueAtTime(60, now + 0.35);
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
             break;
           case 'levelup':
             for (let i = 0; i < 4; i++) {
@@ -223,31 +214,27 @@
               const g = this.audioContext.createGain();
               o.connect(g);
               g.connect(this.audioContext.destination);
-              o.frequency.value = 400 + i * 150;
-              g.gain.setValueAtTime(0.1, now + i * 0.1);
-              g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.15);
-              o.start(now + i * 0.1);
-              o.stop(now + i * 0.1 + 0.15);
+              o.frequency.value = 420 + i * 180;
+              g.gain.setValueAtTime(0.08, now + i * 0.08);
+              g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.08 + 0.14);
+              o.start(now + i * 0.08);
+              o.stop(now + i * 0.08 + 0.14);
             }
-            break;
+            return;
           case 'trap':
             osc.frequency.setValueAtTime(200, now);
-            osc.frequency.exponentialRampToValueAtTime(100, now + 0.2);
-            gain.gain.setValueAtTime(0.15, now);
+            osc.frequency.exponentialRampToValueAtTime(90, now + 0.2);
+            gain.gain.setValueAtTime(0.14, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-            osc.start(now);
-            osc.stop(now + 0.2);
             break;
-          case 'step':
-            osc.frequency.setValueAtTime(freq1, now);
+          default:
+            osc.frequency.setValueAtTime(350, now);
             gain.gain.setValueAtTime(0.05, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
-            osc.start(now);
-            osc.stop(now + duration);
-            break;
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
         }
+        osc.start(now);
+        osc.stop(now + 0.25);
       }
-
       toggle() {
         this.enabled = !this.enabled;
         return this.enabled;
@@ -255,13 +242,12 @@
     }
 
     const soundManager = new SoundManager();
-
-    // ============= GAME SETUP =============
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
     const hud = document.getElementById("hud");
     const deathCount = document.getElementById("deathCount");
     const timer = document.getElementById("timer");
+    const startModal = document.getElementById("startModal");
 
     const keys = {};
     window.addEventListener("keydown", (e) => {
@@ -280,7 +266,6 @@
       keys[e.key.toLowerCase()] = false;
     });
 
-    // ============= LEVELS =============
     const levels = [
       {
         name: "Simple Start",
@@ -505,7 +490,6 @@
         message: "Almost there. Don't give up.",
         controlFlip: { triggerX: 700, duration: 150 }
       },
-      // More levels...
       ...Array.from({ length: 20 }, (_, i) => ({
         name: `Level ${11 + i}`,
         start: { x: 30, y: 450 },
@@ -567,7 +551,7 @@
     }
 
     let currentLevel = 0;
-    let player;
+    let player = null;
     let gameOver = false;
     let levelStartTime = 0;
     let totalDeaths = 0;
@@ -588,7 +572,7 @@
         dir: 1,
         flipped: false,
         flipTimer: 0,
-        color: "#facc15"
+        color: '#facc15'
       };
     }
 
@@ -596,8 +580,9 @@
       soundManager.init();
       gameStarted = true;
       totalDeaths = 0;
+      deathCount.textContent = totalDeaths;
       loadLevel(0);
-      document.getElementById("startModal").classList.add("hidden");
+      startModal.classList.add('hidden');
     }
 
     function loadLevel(index) {
@@ -612,6 +597,7 @@
     }
 
     function resetLevel() {
+      if (!gameStarted) return;
       soundManager.play('death');
       levelDeaths++;
       totalDeaths++;
@@ -654,12 +640,8 @@
     function checkDoor() {
       const level = levels[currentLevel];
       for (const door of level.doors) {
-        if (door.fake && rectsIntersect(player, door)) {
-          return "fake";
-        }
-        if (!door.fake && rectsIntersect(player, door)) {
-          return "goal";
-        }
+        if (door.fake && rectsIntersect(player, door)) return 'fake';
+        if (!door.fake && rectsIntersect(player, door)) return 'goal';
       }
       return null;
     }
@@ -667,31 +649,30 @@
     function nextLevel() {
       soundManager.play('levelup');
       if (currentLevel < levels.length - 1) {
-        document.getElementById("winModal").classList.remove("hidden");
-        document.getElementById("winTitle").textContent = `Level ${currentLevel + 1} Complete!`;
-        document.getElementById("winMessage").textContent = `Deaths: ${levelDeaths} | Time: ${Math.floor((Date.now() - levelStartTime) / 1000)}s`;
+        document.getElementById('winModal').classList.remove('hidden');
+        document.getElementById('winTitle').textContent = `Level ${currentLevel + 1} Complete!`;
+        document.getElementById('winMessage').textContent = `Deaths: ${levelDeaths} | Time: ${Math.floor((Date.now() - levelStartTime) / 1000)}s`;
       } else {
-        document.getElementById("winModal").classList.remove("hidden");
-        document.getElementById("winTitle").textContent = "YOU ESCAPED THE DEVIL!";
-        document.getElementById("winMessage").textContent = `Total Deaths: ${totalDeaths} | Final Time: ${Math.floor((Date.now() - levelStartTime) / 1000)}s`;
+        document.getElementById('winModal').classList.remove('hidden');
+        document.getElementById('winTitle').textContent = 'YOU ESCAPED THE DEVIL!';
+        document.getElementById('winMessage').textContent = `Total Deaths: ${totalDeaths} | Final Time: ${Math.floor((Date.now() - levelStartTime) / 1000)}s`;
       }
     }
 
     function goToNextLevel() {
+      document.getElementById('winModal').classList.add('hidden');
       loadLevel(currentLevel + 1);
-      document.getElementById("winModal").classList.add("hidden");
     }
 
     function die() {
-      if (gameOver) return;
+      if (gameOver || !gameStarted) return;
       gameOver = true;
       soundManager.play('death');
       setTimeout(resetLevel, 300);
     }
 
     function update() {
-      if (gameOver || !gameStarted) return;
-
+      if (gameOver || !gameStarted || !player) return;
       const level = levels[currentLevel];
 
       let moveX = 0;
@@ -707,7 +688,7 @@
         player.vx = 0;
       }
 
-      if ((keys.w || keys.arrowup || keys[" "]) && player.onGround) {
+      if ((keys.w || keys.arrowup || keys[' ']) && player.onGround) {
         player.vy = -player.jumpForce;
         player.onGround = false;
         soundManager.play('jump');
@@ -763,26 +744,26 @@
       if (hitSaw()) die();
 
       const doorState = checkDoor();
-      if (doorState === "fake") {
+      if (doorState === 'fake') {
         soundManager.play('trap');
         die();
       }
-      if (doorState === "goal") nextLevel();
+      if (doorState === 'goal') nextLevel();
 
       const elapsed = Math.floor((Date.now() - levelStartTime) / 1000);
-      timer.textContent = elapsed + "s";
+      timer.textContent = elapsed + 's';
     }
 
     function drawBackground() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      grad.addColorStop(0, "#1a1b3f");
-      grad.addColorStop(0.5, "#0f0f2e");
-      grad.addColorStop(1, "#0a0a1f");
+      grad.addColorStop(0, '#1a1b3f');
+      grad.addColorStop(0.5, '#0f0f2e');
+      grad.addColorStop(1, '#0a0a1f');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = "rgba(255,255,255,0.03)";
+      ctx.fillStyle = 'rgba(255,255,255,0.03)';
       for (let x = 0; x < canvas.width; x += 40) {
         ctx.fillRect(x, 0, 1, canvas.height);
       }
@@ -795,21 +776,21 @@
       const level = levels[currentLevel];
       for (const p of getActivePlatforms()) {
         const gradient = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
-        gradient.addColorStop(0, "#64748b");
-        gradient.addColorStop(1, "#475569");
+        gradient.addColorStop(0, '#64748b');
+        gradient.addColorStop(1, '#475569');
         ctx.fillStyle = gradient;
         ctx.fillRect(p.x, p.y, p.w, p.h);
-        ctx.fillStyle = "#94a3b8";
+        ctx.fillStyle = '#94a3b8';
         ctx.fillRect(p.x + 3, p.y + 3, p.w - 6, p.h - 6);
       }
 
       for (const d of level.doors) {
         const gradient = ctx.createLinearGradient(d.x, d.y, d.x, d.y + d.h);
-        gradient.addColorStop(0, d.fake ? "#dc2626" : "#16a34a");
-        gradient.addColorStop(1, d.fake ? "#7f1d1d" : "#15803d");
+        gradient.addColorStop(0, d.fake ? '#dc2626' : '#16a34a');
+        gradient.addColorStop(1, d.fake ? '#7f1d1d' : '#15803d');
         ctx.fillStyle = gradient;
         ctx.fillRect(d.x, d.y, d.w, d.h);
-        ctx.fillStyle = "#e2e8f0";
+        ctx.fillStyle = '#e2e8f0';
         ctx.fillRect(d.x + 8, d.y + 8, d.w - 16, d.h - 16);
       }
     }
@@ -817,7 +798,7 @@
     function drawSpikes() {
       const level = levels[currentLevel];
       for (const s of level.spikes) {
-        ctx.fillStyle = "#ef4444";
+        ctx.fillStyle = '#ef4444';
         const count = Math.max(3, Math.floor(s.w / 6));
         const step = s.w / count;
         for (let i = 0; i < count; i++) {
@@ -835,7 +816,6 @@
     function drawSaws() {
       const level = levels[currentLevel];
       if (!level.saws) return;
-
       for (const saw of level.saws) {
         saw.x += saw.speed * saw.direction;
         if (saw.x < 200) saw.direction = 1;
@@ -845,12 +825,12 @@
         ctx.translate(saw.x, saw.y);
         ctx.rotate((Date.now() / 20) % (Math.PI * 2));
 
-        ctx.fillStyle = "#64748b";
+        ctx.fillStyle = '#64748b';
         ctx.beginPath();
         ctx.arc(0, 0, saw.r, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = "#ef4444";
+        ctx.fillStyle = '#ef4444';
         for (let i = 0; i < 8; i++) {
           const angle = (i / 8) * Math.PI * 2;
           const x1 = Math.cos(angle) * (saw.r - 5);
@@ -869,26 +849,35 @@
     }
 
     function drawPlayer() {
-      ctx.fillStyle = player.flipped ? "#f87171" : player.color;
-      ctx.fillRect(player.x, player.y, player.w, player.h);
+      if (!player) return;
 
-      ctx.fillStyle = "#1f2937";
-      const eyex = player.x + (player.dir > 0 ? 10 : 12);
-      ctx.fillRect(eyex, player.y + 10, 4, 4);
-      ctx.fillRect(player.x + (player.dir > 0 ? 16 : 6), player.y + 10, 4, 4);
+      ctx.save();
+      ctx.translate(player.x, player.y);
+
+      ctx.fillStyle = player.flipped ? '#f87171' : '#facc15';
+      ctx.fillRect(0, 0, player.w, player.h);
+
+      ctx.fillStyle = '#1f2937';
+      ctx.fillRect(player.dir > 0 ? 7 : 14, 8, 4, 4);
+      ctx.fillRect(player.dir > 0 ? 17 : 5, 8, 4, 4);
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(4, 30, player.w - 8, 5);
+
+      ctx.restore();
 
       if (player.flipTimer > 0) {
-        ctx.fillStyle = "rgba(248, 113, 113, 0.3)";
-        ctx.fillRect(player.x - 5, player.y - 5, player.w + 10, player.h + 10);
+        ctx.fillStyle = 'rgba(248, 113, 113, 0.25)';
+        ctx.fillRect(player.x - 6, player.y - 6, player.w + 12, player.h + 12);
       }
     }
 
     function drawMessage() {
       const level = levels[currentLevel];
-      ctx.fillStyle = "rgba(0,0,0,0.4)";
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
       ctx.fillRect(16, 16, 450, 35);
-      ctx.fillStyle = "#fef3c7";
-      ctx.font = "bold 16px Arial";
+      ctx.fillStyle = '#fef3c7';
+      ctx.font = 'bold 16px Arial';
       ctx.fillText(level.message, 28, 42);
     }
 
@@ -911,8 +900,8 @@
     window.nextLevel = goToNextLevel;
     window.resetLevel = resetLevel;
 
+    startGame();
     loop();
-    document.getElementById("startModal").classList.remove("hidden");
   </script>
 </body>
 </html>
